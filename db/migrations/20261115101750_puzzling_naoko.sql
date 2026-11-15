@@ -1,0 +1,1 @@
+CREATE INDEX `exercises_user_id_idx` ON `exercises` (`user_id`);
