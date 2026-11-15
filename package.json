@@ -1,0 +1,42 @@
+{
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@void/react": "1.9.1",
+    "oxc-transform-react": ">=0.152.0 <0.157.0",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.0.10",
+    "void": "^1.9.1"
+  },
+  "name": "sap-learning",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "postinstall": "void prepare",
+    "check": "void prepare && tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/unit.test.ts",
+    "test:e2e": "playwright test",
+    "db:migrate": "void db migrate",
+    "db:generate": "void db generate",
+    "deploy": "void deploy --platform cloudflare",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "hono": "^4.11.9",
+    "lucide-react": "^1.73.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "zod": "^4.6.7"
+  },
+  "engines": {
+    "node": "^24.22.0 || >=26.12.0"
+  }
+}
