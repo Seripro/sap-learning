@@ -100,6 +100,15 @@ async function limit(key: string, max: number, window: number) {
     .returning();
   if (row.count > max)
     fail(429, '試行回数が上限に達しました。時間をおいてお試しください');
+  return row.expiresAt;
+}
+async function releaseLimit(key: string, expiresAt: number) {
+  await db
+    .update(limits)
+    .set({
+      count: sql`CASE WHEN ${limits.count} > 0 THEN ${limits.count} - 1 ELSE 0 END`,
+    })
+    .where(and(eq(limits.key, key), eq(limits.expiresAt, expiresAt)));
 }
 function publicExercise(id: string, data: Exercise) {
   return {
@@ -147,8 +156,10 @@ export async function handle(c: Context) {
     const { username, password } = validate(credentials, input);
     const ip = c.req.header('cf-connecting-ip') ?? 'local';
     await db.delete(limits).where(lt(limits.expiresAt, Date.now()));
-    await limit('ip:' + (await digest(ip)), 30, 15 * 60000);
-    await limit('id:' + username, 10, 15 * 60000);
+    const ipKey = 'ip:' + (await digest(ip));
+    const idKey = 'id:' + username;
+    const ipExpiry = await limit(ipKey, 30, 15 * 60000);
+    const idExpiry = await limit(idKey, 10, 15 * 60000);
     let [user] = await db
       .select()
       .from(users)
@@ -176,6 +187,8 @@ export async function handle(c: Context) {
       const valid = await verifyPassword(password, user?.password ?? dummy);
       if (!user || !valid) fail(401, 'IDまたはパスワードが違います');
     }
+    await releaseLimit(idKey, idExpiry);
+    await releaseLimit(ipKey, ipExpiry);
     await session(c, user.id, user.password);
     return { user: { id: user.id, username: user.username } };
   }

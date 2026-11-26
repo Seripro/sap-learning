@@ -252,6 +252,43 @@ test('login throttling rejects repeated failures', async ({ playwright }) => {
   await c.dispose();
 });
 
+test('successful logins do not consume the shared IP or ID failure limits', async ({
+  playwright,
+}) => {
+  const c = await playwright.request.newContext({
+    baseURL: origin,
+    extraHTTPHeaders: {
+      Origin: origin,
+      'CF-Connecting-IP': crypto.randomUUID(),
+    },
+  });
+  const id = username();
+  expect(
+    (
+      await c.post('/api/register', { data: { username: id, password } })
+    ).status(),
+  ).toBe(200);
+  for (let i = 0; i < 35; i++)
+    expect(
+      (
+        await c.post('/api/login', { data: { username: id, password } })
+      ).status(),
+    ).toBe(200);
+  const other = username();
+  for (let i = 0; i < 10; i++)
+    expect(
+      (
+        await c.post('/api/login', { data: { username: other, password } })
+      ).status(),
+    ).toBe(401);
+  expect(
+    (
+      await c.post('/api/login', { data: { username: other, password } })
+    ).status(),
+  ).toBe(429);
+  await c.dispose();
+});
+
 test('password change invalidates another session', async ({ playwright }) => {
   const headers = { Origin: origin, 'CF-Connecting-IP': crypto.randomUUID() };
   const a = await playwright.request.newContext({
