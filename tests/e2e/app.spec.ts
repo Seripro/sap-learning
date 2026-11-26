@@ -4,6 +4,39 @@ const password = 'Learning_aws_2026!';
 const origin = process.env.APP_URL || 'http://localhost:5173';
 const username = () =>
   'test_' + crypto.randomUUID().replaceAll('-', '').slice(0, 12);
+test('expired session returns to login and allows signing in again', async ({
+  page,
+  context,
+}) => {
+  const id = username();
+  await page.goto('/');
+  await page.getByRole('button', { name: '新規登録', exact: true }).click();
+  await page.getByLabel('ユーザーID', { exact: true }).fill(id);
+  await page.getByLabel('パスワード', { exact: true }).fill(password);
+  await page.getByLabel('パスワード（確認）', { exact: true }).fill(password);
+  await page.getByRole('button', { name: 'アカウントを作成' }).click();
+  await expect(
+    page.getByRole('heading', { name: '一問ずつ、その先へ。' }),
+  ).toBeVisible();
+  await context.clearCookies();
+  await page
+    .getByRole('button', { name: '演習をはじめる', exact: true })
+    .last()
+    .click();
+  await page.getByRole('button', { name: '演習を開始する' }).click();
+  await expect(
+    page.getByText('セッションが終了しました。もう一度ログインしてください'),
+  ).toBeVisible();
+  await page.getByLabel('ユーザーID', { exact: true }).fill(id);
+  await page.getByLabel('パスワード', { exact: true }).fill(password);
+  await page
+    .getByRole('button', { name: 'ログイン', exact: true })
+    .last()
+    .click();
+  await expect(
+    page.getByRole('heading', { name: '一問ずつ、その先へ。' }),
+  ).toBeVisible();
+});
 test('registration, practice, resume, grading, bookmarks, review, password change and login', async ({
   page,
 }) => {
