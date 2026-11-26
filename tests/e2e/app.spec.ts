@@ -4,6 +4,53 @@ const password = 'Learning_aws_2026!';
 const origin = process.env.APP_URL || 'http://localhost:5173';
 const username = () =>
   'test_' + crypto.randomUUID().replaceAll('-', '').slice(0, 12);
+test('older completed and unfinished exercises remain accessible', async ({
+  page,
+}) => {
+  const headers = { Origin: origin, 'CF-Connecting-IP': crypto.randomUUID() };
+  await page.setExtraHTTPHeaders({
+    'CF-Connecting-IP': headers['CF-Connecting-IP'],
+  });
+  const register = await page.request.post('/api/register', {
+    headers,
+    data: { username: username(), password },
+  });
+  expect(register.status()).toBe(200);
+  const start = async (count: number) => {
+    const response = await page.request.post('/api/start', {
+      headers,
+      data: { domain: 'all', count, mode: 'all' },
+    });
+    expect(response.status()).toBe(200);
+    return response.json();
+  };
+  const completed = await start(1);
+  const response = await page.request.post('/api/answer', {
+    headers,
+    data: {
+      exerciseId: completed.id,
+      questionId: completed.questions[0].id,
+      selected: [completed.questions[0].choices[0].id],
+      uncertain: false,
+    },
+  });
+  expect(response.status()).toBe(200);
+  await start(2);
+  for (let i = 0; i < 10; i++) await start(3);
+  await page.goto('/');
+  await expect(page.locator('.history-row')).toHaveCount(5);
+  await page.getByRole('button', { name: 'さらに履歴を表示' }).click();
+  await expect(page.locator('.history-row')).toHaveCount(10);
+  await page.getByRole('button', { name: 'さらに履歴を表示' }).click();
+  await expect(page.locator('.history-row')).toHaveCount(12);
+  await page.locator('.history-row').filter({ hasText: '1問の演習' }).click();
+  await expect(
+    page.getByRole('heading', { name: '今回の演習結果' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'ホームへ', exact: true }).click();
+  await page.locator('.history-row').filter({ hasText: '2問の演習' }).click();
+  await expect(page.getByText('QUESTION 01', { exact: false })).toBeVisible();
+});
 test('expired session returns to login and allows signing in again', async ({
   page,
   context,
