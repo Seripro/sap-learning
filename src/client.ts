@@ -50,6 +50,14 @@ export type PublicQuestion = Catalog & {
   };
 };
 export type Exercise = { id: string; questions: PublicQuestion[] };
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+  }
+}
 export async function api<T>(action: string, data?: unknown): Promise<T> {
   const response = await fetch('/api/' + action, {
     method: data === undefined ? 'GET' : 'POST',
@@ -59,7 +67,8 @@ export async function api<T>(action: string, data?: unknown): Promise<T> {
     body: data === undefined ? undefined : JSON.stringify(data),
   });
   const result = (await response.json()) as T & { error?: string };
-  if (!response.ok) throw new Error(result.error ?? '通信に失敗しました');
+  if (!response.ok)
+    throw new ApiError(result.error ?? '通信に失敗しました', response.status);
   return result as T;
 }
 export const percent = (correct: number, total: number) =>

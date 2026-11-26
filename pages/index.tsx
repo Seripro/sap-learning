@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import {
   api,
+  ApiError,
   percent,
   type User,
   type State,
@@ -66,7 +67,7 @@ export default function App() {
       .finally(() => setInitial(false));
   }, []);
   useEffect(() => {
-    if (user) refresh().catch((e) => setError(e.message));
+    if (user) refresh().catch(handleError);
   }, [user]);
   useEffect(() => {
     setSelected([]);
@@ -77,6 +78,18 @@ export default function App() {
     setState(s);
     return s;
   }
+  function handleError(e: unknown) {
+    if (user && e instanceof ApiError && e.status === 401) {
+      setUser(null);
+      setState(null);
+      setExercise(null);
+      setView('home');
+      setMobile(false);
+      setError('セッションが終了しました。もう一度ログインしてください');
+      return;
+    }
+    setError(e instanceof Error ? e.message : '通信に失敗しました');
+  }
   async function run(action: () => Promise<void>) {
     if (busy) return;
     setBusy(true);
@@ -84,7 +97,7 @@ export default function App() {
     try {
       await action();
     } catch (e) {
-      setError(e instanceof Error ? e.message : '通信に失敗しました');
+      handleError(e);
     } finally {
       setBusy(false);
     }
