@@ -122,6 +122,6 @@ VoidがWorkers・D1を構成し、DBマイグレーションを適用します�
 
 ### GitHub Actions
 
-PR と main への push で型検査・単体テスト・ビルド・ローカルDBを使うE2Eを実行します。main では成功後に Cloudflare へデプロイし、マイグレーションも適用します。手動実行も可能です。
+PR と main への push で CI が型検査・単体テスト・ビルド・ローカルDBを使うE2Eを実行します。main の CI 成功後、別のデプロイワークフローが検証済みコミットを Cloudflare へデプロイし、マイグレーションも適用します。手動で再実行する場合は main の CI を実行してください。
 
 リポジトリの Actions secrets に `CLOUDFLARE_API_TOKEN` を設定してください。初回の Workers 作成と D1 の構成・マイグレーションに必要な権限を付与します。複数アカウントにアクセスできるトークンの場合は Actions variables に `CLOUDFLARE_ACCOUNT_ID`、必要に応じて `CLOUDFLARE_WORKERS_SUBDOMAIN` も設定します。詳細は [Void の Cloudflare CI 手順](https://void.cloud/integrations/cloudflare)を参照してください。
