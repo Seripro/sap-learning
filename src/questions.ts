@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import raw from '../data/questions.json' with { type: 'json' };
-const schema = z
+export const questionSchema = z
   .object({
     id: z.string().min(1),
     version: z.number().int().positive(),
@@ -32,10 +32,10 @@ const schema = z
         message: '選択肢・正解・解説の指定が不正です',
       });
   });
-export const questions = z.array(schema).parse(raw);
+export const questions = z.array(questionSchema).parse(raw);
 if (new Set(questions.map((q) => q.id)).size !== questions.length)
   throw new Error('問題IDが重複しています');
-export type Question = z.infer<typeof schema>;
+export type Question = z.infer<typeof questionSchema>;
 export const domains = [...new Set(questions.map((q) => q.domain))];
 export function availableQuestionIds(ids: string[], catalog: { id: string }[]) {
   const available = new Set(catalog.map((q) => q.id));
