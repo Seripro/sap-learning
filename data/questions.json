@@ -1,0 +1,230 @@
+[
+  {
+    "id": "org-001",
+    "version": 1,
+    "domain": "組織・複雑性",
+    "services": ["AWS Organizations", "SCP"],
+    "type": "single",
+    "question": "複数のAWSアカウントを管理しています。開発用OU内の全アカウントで、特定リージョン以外へのリソース作成を制限したいと考えています。最も適切な方法はどれですか？",
+    "choices": [
+      {
+        "id": "a",
+        "text": "開発用OUに、aws:RequestedRegion条件を使うSCPを適用する"
+      },
+      {
+        "id": "b",
+        "text": "各アカウントのIAMユーザーにAdministratorAccessを付与する"
+      },
+      {
+        "id": "c",
+        "text": "AWS Configの記録を停止する"
+      },
+      {
+        "id": "d",
+        "text": "全アカウントを同一VPCに接続する"
+      }
+    ],
+    "correctAnswers": ["a"],
+    "explanation": "SCPは組織内の権限の上限を定義できます。リージョン制限ではグローバルサービスや例外の扱いも設計します。",
+    "choiceExplanations": {
+      "a": "OU単位で適用でき、リージョン条件による制限を集中管理できます。",
+      "b": "管理者権限の付与はリージョン制限になりません。",
+      "c": "Configは構成の記録・評価に使い、権限制限は行いません。",
+      "d": "ネットワーク接続はAPI操作のリージョンを制限しません。"
+    },
+    "references": [
+      "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html"
+    ],
+    "isSample": true
+  },
+  {
+    "id": "new-001",
+    "version": 1,
+    "domain": "新しいソリューション",
+    "services": ["Amazon S3", "CloudFront"],
+    "type": "single",
+    "question": "静的コンテンツを世界中の利用者に低遅延で配信したいと考えています。S3バケットを公開せず、CloudFront経由のアクセスに限定する構成はどれですか？",
+    "choices": [
+      {
+        "id": "a",
+        "text": "S3のウェブサイトエンドポイントを公開する"
+      },
+      {
+        "id": "b",
+        "text": "S3 RESTオリジンにOACを設定し、CloudFrontディストリビューションを許可するバケットポリシーを設定する"
+      },
+      {
+        "id": "c",
+        "text": "S3 Transfer Accelerationのみを有効にする"
+      },
+      {
+        "id": "d",
+        "text": "CloudFrontを使わず、全利用者にIAMユーザーを作成する"
+      }
+    ],
+    "correctAnswers": ["b"],
+    "explanation": "CloudFrontのOrigin Access Control（OAC）でオリジンへのリクエストを署名し、バケットポリシーで対象ディストリビューションからのアクセスを許可します。",
+    "choiceExplanations": {
+      "a": "公開ウェブサイトエンドポイントは、非公開S3オリジンをOACで保護する要件に合いません。",
+      "b": "OACとバケットポリシーを組み合わせてS3を非公開に保てます。",
+      "c": "転送高速化はエッジキャッシュによるコンテンツ配信の代替ではありません。",
+      "d": "利用者ごとのIAMユーザー作成は公開コンテンツ配信に適しません。"
+    },
+    "references": [
+      "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html"
+    ],
+    "isSample": true
+  },
+  {
+    "id": "improve-001",
+    "version": 1,
+    "domain": "継続的な改善",
+    "services": ["Amazon RDS", "AWS Backup"],
+    "type": "multiple",
+    "question": "データベースの障害対策を見直しています。RDSの可用性向上と、誤操作前の時点への復元に備える施策を2つ選んでください。",
+    "choices": [
+      {
+        "id": "a",
+        "text": "対応するRDS構成でMulti-AZを有効にする"
+      },
+      {
+        "id": "b",
+        "text": "自動バックアップと適切な保持期間を設定する"
+      },
+      {
+        "id": "c",
+        "text": "バックアップを無効にして書き込み性能を優先する"
+      },
+      {
+        "id": "d",
+        "text": "アプリケーションの接続先を常にスタンバイのIPに固定する"
+      }
+    ],
+    "correctAnswers": ["a", "b"],
+    "explanation": "Multi-AZは障害時の可用性、自動バックアップは保持期間内のポイントインタイムリカバリに役立ちます。高可用性とバックアップはそれぞれ異なる目的を持ちます。",
+    "choiceExplanations": {
+      "a": "Multi-AZにより障害時のフェイルオーバーに備えられます。",
+      "b": "自動バックアップを設定して復元可能な期間を確保します。",
+      "c": "バックアップを無効にすると誤操作前への復元手段を失います。",
+      "d": "RDSのDNSエンドポイントを利用し、IP固定を避けます。"
+    },
+    "references": [
+      "https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.MultiAZ.html"
+    ],
+    "isSample": true
+  },
+  {
+    "id": "migrate-001",
+    "version": 1,
+    "domain": "移行・モダナイゼーション",
+    "services": ["AWS DMS"],
+    "type": "single",
+    "question": "オンプレミスのデータベースをAWSへ移行します。停止時間を抑えるため、初期データの転送後もソースの変更を移行先に継続反映したい場合、適切なサービス・機能はどれですか？",
+    "choices": [
+      {
+        "id": "a",
+        "text": "AWS DMSのフルロードとCDCを利用する"
+      },
+      {
+        "id": "b",
+        "text": "AWS Snowballだけで継続レプリケーションする"
+      },
+      {
+        "id": "c",
+        "text": "Amazon CloudWatch LogsにSQLを保存する"
+      },
+      {
+        "id": "d",
+        "text": "Amazon Route 53のヘルスチェックだけを設定する"
+      }
+    ],
+    "correctAnswers": ["a"],
+    "explanation": "AWS DMSのフルロードと変更データキャプチャ（CDC）を使って初期ロード後も変更を反映し、切り替え時の停止時間を抑えます。対応エンジンやログ設定などの前提条件は別途確認が必要です。",
+    "choiceExplanations": {
+      "a": "フルロードとCDCが、初期データ移行と継続的な変更反映に対応します。",
+      "b": "Snowballによる物理転送だけでは継続的なCDCを実現できません。",
+      "c": "ログの監視・保管はデータ移行の代替ではありません。",
+      "d": "DNSのヘルスチェックはDBのデータを複製しません。"
+    },
+    "references": [
+      "https://docs.aws.amazon.com/dms/latest/userguide/CHAP.Tasks.CDC.html"
+    ],
+    "isSample": true
+  },
+  {
+    "id": "org-002",
+    "version": 1,
+    "domain": "組織・複雑性",
+    "services": ["AWS Transit Gateway"],
+    "type": "single",
+    "question": "複数アカウントに分散した多数のVPCとオンプレミスのネットワークを、ハブアンドスポーク型で接続したいと考えています。中心となるサービスはどれですか？",
+    "choices": [
+      {
+        "id": "a",
+        "text": "Amazon S3"
+      },
+      {
+        "id": "b",
+        "text": "AWS Transit Gateway"
+      },
+      {
+        "id": "c",
+        "text": "AWS Secrets Manager"
+      },
+      {
+        "id": "d",
+        "text": "Amazon SES"
+      }
+    ],
+    "correctAnswers": ["b"],
+    "explanation": "Transit GatewayはVPCやオンプレミス接続を集約するネットワークのハブとして利用できます。ルートテーブルによって接続間の到達性も制御します。",
+    "choiceExplanations": {
+      "a": "S3はオブジェクトストレージです。",
+      "b": "多数のネットワーク接続をハブに集約できます。",
+      "c": "Secrets Managerはシークレットの管理に使用します。",
+      "d": "SESはメール送信サービスです。"
+    },
+    "references": [
+      "https://docs.aws.amazon.com/vpc/latest/tgw/what-is-transit-gateway.html"
+    ],
+    "isSample": true
+  },
+  {
+    "id": "new-002",
+    "version": 1,
+    "domain": "新しいソリューション",
+    "services": ["Amazon SQS", "AWS Lambda"],
+    "type": "multiple",
+    "question": "注文APIと注文処理を分離し、処理側の一時的な障害に備えます。SQS標準キューとLambdaを使うときに適切な設計を2つ選んでください。",
+    "choices": [
+      {
+        "id": "a",
+        "text": "注文処理を冪等にする"
+      },
+      {
+        "id": "b",
+        "text": "処理失敗の調査に備えデッドレターキューを設定する"
+      },
+      {
+        "id": "c",
+        "text": "メッセージは絶対に重複しないと仮定する"
+      },
+      {
+        "id": "d",
+        "text": "注文処理の前に必ずキュー全体を削除する"
+      }
+    ],
+    "correctAnswers": ["a", "b"],
+    "explanation": "SQS標準キューは少なくとも1回の配信を前提とするため、重複処理への対策が必要です。繰り返し失敗するメッセージはDLQで隔離・調査します。",
+    "choiceExplanations": {
+      "a": "同じ注文が再配信されても二重処理を防げるようにします。",
+      "b": "DLQは処理が繰り返し失敗するメッセージの調査に役立ちます。",
+      "c": "標準キューでは重複配信が起こり得ます。",
+      "d": "キュー削除は未処理の注文を失う原因になります。"
+    },
+    "references": [
+      "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/standard-queues.html"
+    ],
+    "isSample": true
+  }
+]
