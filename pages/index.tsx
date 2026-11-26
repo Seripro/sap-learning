@@ -60,6 +60,7 @@ export default function App() {
     [mode, setMode] = useState('all'),
     [reviewTab, setReviewTab] = useState<'wrong' | 'bookmarks'>('wrong');
   const [notice, setNotice] = useState('');
+  const [historyLimit, setHistoryLimit] = useState(5);
   useEffect(() => {
     api<{ user: User | null }>('me')
       .then((r) => setUser(r.user))
@@ -68,6 +69,7 @@ export default function App() {
   }, []);
   useEffect(() => {
     if (user) refresh().catch(handleError);
+    setHistoryLimit(5);
   }, [user]);
   useEffect(() => {
     setSelected([]);
@@ -532,7 +534,7 @@ export default function App() {
                         </span>
                       </div>
                     ) : (
-                      state.exercises.slice(0, 5).map((e) => (
+                      state.exercises.slice(0, historyLimit).map((e) => (
                         <button
                           className="history-row"
                           key={e.id}
@@ -563,6 +565,14 @@ export default function App() {
                           <ChevronRight size={17} />
                         </button>
                       ))
+                    )}
+                    {state.exercises.length > historyLimit && (
+                      <button
+                        className="button secondary"
+                        onClick={() => setHistoryLimit((limit) => limit + 5)}
+                      >
+                        さらに履歴を表示
+                      </button>
                     )}
                   </section>
                 </>
