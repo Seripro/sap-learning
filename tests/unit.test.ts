@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   questions,
+  questionSchema,
   isCorrect,
   shuffle,
   availableQuestionIds,
@@ -12,10 +13,21 @@ import {
   digest,
   newToken,
 } from '../src/password.ts';
-test('sample catalog validates and contains every domain and choice type', () => {
+test('catalog validates and contains every domain and choice type', () => {
   assert.equal(new Set(questions.map((q) => q.domain)).size, 4);
   assert(questions.some((q) => q.type === 'multiple'));
-  assert(questions.every((q) => q.isSample));
+});
+test('question validation accepts sample and non-sample questions and rejects invalid answers', () => {
+  const question = questions[0];
+  assert(questionSchema.safeParse({ ...question, isSample: true }).success);
+  assert(questionSchema.safeParse({ ...question, isSample: false }).success);
+  assert(
+    !questionSchema.safeParse({ ...question, correctAnswers: ['missing'] })
+      .success,
+  );
+  assert(
+    !questionSchema.safeParse({ ...question, choiceExplanations: {} }).success,
+  );
 });
 test('review and bookmark IDs exclude removed questions without changing stored IDs', () => {
   const stored = ['removed', 'available'];
