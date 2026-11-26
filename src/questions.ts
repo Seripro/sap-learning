@@ -37,6 +37,10 @@ if (new Set(questions.map((q) => q.id)).size !== questions.length)
   throw new Error('問題IDが重複しています');
 export type Question = z.infer<typeof schema>;
 export const domains = [...new Set(questions.map((q) => q.domain))];
+export function availableQuestionIds(ids: string[], catalog: { id: string }[]) {
+  const available = new Set(catalog.map((q) => q.id));
+  return ids.filter((id) => available.has(id));
+}
 export function isCorrect(q: Question, selected: string[]) {
   return (
     selected.length === q.correctAnswers.length &&

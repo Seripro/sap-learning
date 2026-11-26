@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { questions, isCorrect, shuffle } from '../src/questions.ts';
+import {
+  questions,
+  isCorrect,
+  shuffle,
+  availableQuestionIds,
+} from '../src/questions.ts';
 import {
   hashPassword,
   verifyPassword,
@@ -11,6 +16,18 @@ test('sample catalog validates and contains every domain and choice type', () =>
   assert.equal(new Set(questions.map((q) => q.domain)).size, 4);
   assert(questions.some((q) => q.type === 'multiple'));
   assert(questions.every((q) => q.isSample));
+});
+test('review and bookmark IDs exclude removed questions without changing stored IDs', () => {
+  const stored = ['removed', 'available'];
+  assert.deepEqual(availableQuestionIds(stored, [{ id: 'available' }]), [
+    'available',
+  ]);
+  assert.deepEqual(stored, ['removed', 'available']);
+  assert.deepEqual(availableQuestionIds(stored, []), []);
+  assert.deepEqual(
+    availableQuestionIds(stored, [{ id: 'removed' }, { id: 'available' }]),
+    stored,
+  );
 });
 test('multi-select grading requires the exact set and is independent of order', () => {
   const q = questions.find((q) => q.type === 'multiple')!;

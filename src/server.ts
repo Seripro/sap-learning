@@ -7,6 +7,7 @@ import {
   questions,
   domains,
   isCorrect,
+  availableQuestionIds,
   shuffle,
   type Question,
 } from './questions';
@@ -283,11 +284,17 @@ export async function handle(c: Context) {
         question,
         isSample,
       })),
-      bookmarks: marked.map((b) => b.questionId),
+      bookmarks: availableQuestionIds(
+        marked.map((b) => b.questionId),
+        questions,
+      ),
       history,
-      wrong: [...latest.values()]
-        .filter((a) => !a.correct || a.uncertain)
-        .map((a) => a.questionId),
+      wrong: availableQuestionIds(
+        [...latest.values()]
+          .filter((a) => !a.correct || a.uncertain)
+          .map((a) => a.questionId),
+        questions,
+      ),
       stats: {
         answered: history.length,
         correct: history.filter((a) => a.correct).length,
