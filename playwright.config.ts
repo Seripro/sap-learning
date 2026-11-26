@@ -6,7 +6,7 @@ export default defineConfig({
     baseURL: process.env.APP_URL || 'http://localhost:5173',
     headless: true,
     launchOptions: {
-      executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium',
+      executablePath: process.env.CHROMIUM_PATH || undefined,
       args: ['--no-sandbox'],
     },
   },

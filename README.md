@@ -47,7 +47,7 @@ npm run build
 npm run test:e2e
 ```
 
-E2EはローカルDBにテスト用ユーザーと履歴を作成します。本番には実行しないでください。既定では `/usr/bin/chromium` を使用します。他の環境では `CHROMIUM_PATH` を指定してください。
+E2EはローカルDBにテスト用ユーザーと履歴を作成します。本番には実行しないでください。`npx playwright install chromium` でブラウザを用意してください。別の Chromium を使う場合は `CHROMIUM_PATH` を指定します。
 
 単体テストは問題JSONの整合性、複数選択の採点、パスワードのソルト・照合、セッショントークンを検証します。E2Eは登録から復習・再ログインまで、ユーザー間のデータ分離、回答前の正解非公開、CSRF拒否、二重回答拒否、ログイン試行制限を検証します。
 
@@ -119,3 +119,9 @@ npm run deploy
 VoidがWorkers・D1を構成し、DBマイグレーションを適用します。独自ドメイン、メール、有料のVoid Platformは不要です。無料URLを利用し、Workers / D1の無料枠で運用します。利用枠・プランの契約内容は公開時に確認が必要です。無制限の無料稼働を保証するものではありません。
 
 本番Cloudflareでの認証・デプロイ・無料枠の確認は未実施です。ローカル検証と本番での稼働確認は別です。
+
+### GitHub Actions
+
+PR と main への push で型検査・単体テスト・ビルド・ローカルDBを使うE2Eを実行します。main では成功後に Cloudflare へデプロイし、マイグレーションも適用します。手動実行も可能です。
+
+リポジトリの Actions secrets に `CLOUDFLARE_API_TOKEN` を設定してください。初回の Workers 作成と D1 の構成・マイグレーションに必要な権限を付与します。複数アカウントにアクセスできるトークンの場合は Actions variables に `CLOUDFLARE_ACCOUNT_ID`、必要に応じて `CLOUDFLARE_WORKERS_SUBDOMAIN` も設定します。詳細は [Void の Cloudflare CI 手順](https://void.cloud/integrations/cloudflare)を参照してください。
