@@ -51,29 +51,33 @@ async function body(c: Context) {
   }
 }
 async function current(c: Context) {
-  const token = getCookie(c, 'sap_session');
-  if (!token) return null;
+  const cookie = getCookie(c, 'sap_session');
+  const [userId, token, extra] = cookie?.split('.') ?? [];
+  if (!userId || !token || extra) return null;
+  const [account] = await db.select().from(users).where(eq(users.id, userId));
+  if (!account) return null;
   const [row] = await db
     .select({ id: users.id, username: users.username })
     .from(sessions)
     .innerJoin(users, eq(users.id, sessions.userId))
     .where(
       and(
-        eq(sessions.token, await digest(token)),
+        eq(sessions.token, await digest(token + ':' + account.password)),
+        eq(sessions.userId, userId),
         gt(sessions.expiresAt, Date.now()),
       ),
     );
   return row ?? null;
 }
-async function session(c: Context, userId: string) {
+async function session(c: Context, userId: string, passwordHash: string) {
   await db.delete(sessions).where(lt(sessions.expiresAt, Date.now()));
   const token = newToken();
   await db.insert(sessions).values({
-    token: await digest(token),
+    token: await digest(token + ':' + passwordHash),
     userId,
     expiresAt: Date.now() + 7 * 86400000,
   });
-  setCookie(c, 'sap_session', token, {
+  setCookie(c, 'sap_session', userId + '.' + token, {
     httpOnly: true,
     secure: new URL(c.req.url).protocol === 'https:',
     sameSite: 'Lax',
@@ -172,16 +176,24 @@ export async function handle(c: Context) {
       const valid = await verifyPassword(password, user?.password ?? dummy);
       if (!user || !valid) fail(401, 'IDまたはパスワードが違います');
     }
-    await session(c, user.id);
+    await session(c, user.id, user.password);
     return { user: { id: user.id, username: user.username } };
   }
   const user = await current(c);
   if (action === 'me' && c.req.method === 'GET') return { user };
   if (!user) fail(401, 'ログインしてください');
   if (action === 'logout' && c.req.method === 'POST') {
-    const token = getCookie(c, 'sap_session');
+    const token = getCookie(c, 'sap_session')?.split('.')[1];
+    const [account] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, user.id));
     if (token)
-      await db.delete(sessions).where(eq(sessions.token, await digest(token)));
+      await db
+        .delete(sessions)
+        .where(
+          eq(sessions.token, await digest(token + ':' + account.password)),
+        );
     deleteCookie(c, 'sap_session', { path: '/' });
     return { ok: true };
   }
@@ -197,12 +209,13 @@ export async function handle(c: Context) {
     const [record] = await db.select().from(users).where(eq(users.id, user.id));
     if (!(await verifyPassword(p.current, record.password)))
       fail(400, '現在のパスワードが違います');
+    const passwordHash = await hashPassword(p.password);
     await db
       .update(users)
-      .set({ password: await hashPassword(p.password) })
+      .set({ password: passwordHash })
       .where(eq(users.id, user.id));
     await db.delete(sessions).where(eq(sessions.userId, user.id));
-    await session(c, user.id);
+    await session(c, user.id, passwordHash);
     return { ok: true };
   }
   if (action === 'state' && c.req.method === 'GET') {

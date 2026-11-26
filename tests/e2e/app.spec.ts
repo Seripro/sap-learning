@@ -218,3 +218,35 @@ test('login throttling rejects repeated failures', async ({ playwright }) => {
   ).toBe(429);
   await c.dispose();
 });
+
+test('password change invalidates another session', async ({ playwright }) => {
+  const headers = { Origin: origin, 'CF-Connecting-IP': crypto.randomUUID() };
+  const a = await playwright.request.newContext({
+    baseURL: origin,
+    extraHTTPHeaders: headers,
+  });
+  const b = await playwright.request.newContext({
+    baseURL: origin,
+    extraHTTPHeaders: headers,
+  });
+  const id = username();
+  expect(
+    (
+      await a.post('/api/register', { data: { username: id, password } })
+    ).status(),
+  ).toBe(200);
+  expect(
+    (await b.post('/api/login', { data: { username: id, password } })).status(),
+  ).toBe(200);
+  expect(
+    (
+      await a.post('/api/password', {
+        data: { current: password, password: password + 'new' },
+      })
+    ).status(),
+  ).toBe(200);
+  expect((await b.get('/api/state')).status()).toBe(401);
+  expect((await a.get('/api/state')).status()).toBe(200);
+  await a.dispose();
+  await b.dispose();
+});
